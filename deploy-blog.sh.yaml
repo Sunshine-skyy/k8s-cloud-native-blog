@@ -1,0 +1,41 @@
+#!/bin/bash
+# 一键部署脚本：假设所有 YAML 文件已存在于当前目录
+
+set -e  # 遇到错误立即退出
+
+NAMESPACE="blog-platform"
+
+echo ">>> 创建命名空间 $NAMESPACE（如果不存在）"
+kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
+
+echo ">>> 部署存储层（PV/PVC）"
+kubectl apply -f mysql-pv.yaml -n $NAMESPACE
+
+echo ">>> 部署数据库密码 Secret"
+kubectl apply -f mysql-secret.yaml -n $NAMESPACE
+
+echo ">>> 部署 MySQL"
+kubectl apply -f mysql-deployment.yaml -n $NAMESPACE
+
+echo ">>> 等待 MySQL 就绪（最多 120 秒）"
+kubectl wait --for=condition=ready pod -l tier=database -n $NAMESPACE --timeout=120s
+
+echo ">>> 部署后端 ConfigMap"
+kubectl apply -f api-configmap.yaml -n $NAMESPACE
+
+echo ">>> 部署后端 API"
+kubectl apply -f api-deployment.yaml -n $NAMESPACE
+
+echo ">>> 等待后端 API 就绪"
+kubectl wait --for=condition=ready pod -l tier=backend -n $NAMESPACE --timeout=120s
+
+echo ">>> 部署前端"
+kubectl apply -f frontend-deployment.yaml -n $NAMESPACE
+
+echo ">>> 部署 Ingress（可选，如果文件存在）"
+if [ -f blog-ingress.yaml ]; then
+    kubectl apply -f blog-ingress.yaml -n $NAMESPACE
+fi
+
+echo ">>> 部署完成！"
+echo "查看状态: kubectl get all -n $NAMESPACE"

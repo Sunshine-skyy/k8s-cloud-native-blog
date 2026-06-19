@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog-mysql
+  namespace: blog-platform
+  labels:
+    app: blog
+    tier: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blog
+      tier: database
+  template:
+    metadata:
+      labels:
+        app: blog
+        tier: database
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0.41
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: blog-mysql-secret
+              key: root-password
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: blog-mysql-secret
+              key: database
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: blog-mysql-secret
+              key: user
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: blog-mysql-secret
+              key: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+        livenessProbe:
+          exec:
+            command:
+            - mysqladmin
+            - ping
+            - -h
+            - localhost
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "mysql -h localhost -u root -p$MYSQL_ROOT_PASSWORD -e 'SELECT 1'"
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: blog-mysql-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-mysql
+  namespace: blog-platform
+  labels:
+    app: blog
+    tier: database
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3306
+    targetPort: 3306
+  selector:
+    app: blog
+    tier: database

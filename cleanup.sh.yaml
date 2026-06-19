@@ -1,0 +1,33 @@
+#!/bin/bash
+# KubeBlog 清理脚本
+# 用法：./cleanup.sh
+
+set -e
+
+NAMESPACE="blog-platform"
+PV_NAME="blog-mysql-pv"
+
+echo "============================================"
+echo "   清理 KubeBlog 部署"
+echo "============================================"
+
+# 1. 删除命名空间（会自动删除其下的所有 Pod、Service、Deployment、PVC 等）
+if kubectl get namespace ${NAMESPACE} &> /dev/null; then
+    echo "删除命名空间 ${NAMESPACE} ..."
+    kubectl delete namespace ${NAMESPACE} --wait=true
+    echo "命名空间已删除"
+else
+    echo "命名空间 ${NAMESPACE} 不存在，跳过"
+fi
+
+# 2. 删除持久卷（PV 是集群资源，需单独删除）
+if kubectl get pv ${PV_NAME} &> /dev/null; then
+    echo "删除 PV ${PV_NAME} ..."
+    kubectl delete pv ${PV_NAME}
+else
+    echo "PV ${PV_NAME} 不存在，跳过"
+fi
+
+echo "============================================"
+echo "   清理完成"
+echo "============================================"

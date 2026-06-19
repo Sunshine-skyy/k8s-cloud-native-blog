@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# KubeBlog 状态检查脚本
+
+NAMESPACE="blog-platform"
+
+echo "============================================"
+echo "   KubeBlog 状态检查"
+echo "============================================"
+
+# 检查命名空间
+if ! kubectl get namespace ${NAMESPACE} &> /dev/null; then
+    echo "命名空间 ${NAMESPACE} 不存在，请先部署"
+    exit 1
+fi
+
+echo ""
+echo "=== Pod 状态 ==="
+kubectl get pods -n ${NAMESPACE} -o wide
+
+echo ""
+echo "=== Service 状态 ==="
+kubectl get svc -n ${NAMESPACE}
+
+echo ""
+echo "=== PV/PVC 状态 ==="
+kubectl get pv | grep -E "(NAME|blog-mysql)" || echo "未找到相关 PV"
+kubectl get pvc -n ${NAMESPACE}
+
+echo ""
+echo "=== 访问地址 ==="
+NODEPORT=$(kubectl get svc blog-frontend -n ${NAMESPACE} -o jsonpath='{.spec.ports[0].nodePort}' 2>/dev/null)
+if [ -n "${NODEPORT}" ]; then
+    NODE_IPS=$(kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}' 2>/dev/null)
+    for ip in ${NODE_IPS}; do
+        echo "  http://${ip}:${NODEPORT}"
+    done
+fi
+
+echo ""
+echo "=== 最近日志 (API) ==="
+kubectl logs -n ${NAMESPACE} --tail=10 -l tier=backend 2>/dev/null || echo "API Pod 未就绪"
+
+echo ""
+echo "============================================"

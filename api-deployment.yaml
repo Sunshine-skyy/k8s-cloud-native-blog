@@ -1,0 +1,261 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog-api
+  namespace: blog-platform
+  labels:
+    app: blog
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: blog
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: blog
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: api
+        image: node:16-alpine
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          mkdir -p /app && \
+          cat > /app/package.json << 'PKG'
+          {
+            "name": "blog-api",
+            "version": "1.0.0",
+            "dependencies": {
+              "express": "^4.18.2",
+              "mysql2": "^3.6.0",
+              "express-prom-bundle": "^6.6.0",
+              "prom-client": "^14.2.0"
+            }
+          }
+          PKG
+          cd /app && \
+          npm install --registry=https://registry.npmmirror.com && \
+          cat > /app/server.js << 'SRV'
+          const express = require('express');
+          const mysql = require('mysql2/promise');
+          const promBundle = require('express-prom-bundle');
+          const app = express();
+          app.use(express.json());
+          const metricsMiddleware = promBundle({
+              includeMethod: true,
+              includePath: true,
+              metricsPath: '/metrics'
+          });
+          app.use(metricsMiddleware);
+          const dbConfig = {
+            host: process.env.DB_HOST,
+            port: process.env.DB_PORT,
+            user: process.env.DB_USER,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME
+          };
+          let pool;
+          async function initDB() {
+            pool = mysql.createPool(dbConfig);
+            const connection = await pool.getConnection();
+            await connection.query(`
+              CREATE TABLE IF NOT EXISTS posts (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                content TEXT NOT NULL,
+                author VARCHAR(100) NOT NULL,
+                category VARCHAR(100) NOT NULL DEFAULT 'general',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              )
+            `);
+            try {
+              await connection.query("ALTER TABLE posts ADD COLUMN category VARCHAR(100) NOT NULL DEFAULT 'general'");
+            } catch (err) {
+              if (!err.message.includes('Duplicate column name')) {
+                console.error('Error adding category column:', err);
+              }
+            }
+            connection.release();
+            console.log('Database initialized');
+          }
+          app.get('/health', (req, res) => {
+            res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+          });
+          app.get('/ready', (req, res) => {
+            if (pool) {
+              res.json({ status: 'ready' });
+            } else {
+              res.status(503).json({ status: 'not ready' });
+            }
+          });
+          app.get('/posts', async (req, res) => {
+            const start = Date.now();
+            try {
+              const page = parseInt(req.query.page) || 1;
+              const limit = parseInt(req.query.limit) || 10;
+              const offset = (page - 1) * limit;
+              const [[{ total }]] = await pool.query('SELECT COUNT(*) as total FROM posts');
+              const [rows] = await pool.query(
+                'SELECT * FROM posts ORDER BY created_at DESC LIMIT ? OFFSET ?',
+                [limit, offset]
+              );
+              const duration = Date.now() - start;
+              console.log(`GET /posts took ${duration}ms`);
+              res.json({
+                data: rows,
+                total: total,
+                page: page,
+                limit: limit,
+                totalPages: Math.ceil(total / limit)
+              });
+            } catch (error) {
+              console.error('Error fetching posts:', error);
+              res.status(500).json({ error: 'Failed to fetch posts' });
+            }
+          });
+          app.get('/posts/search', async (req, res) => {
+            const start = Date.now();
+            try {
+              const keyword = req.query.q || '';
+              if (!keyword.trim()) {
+                const [rows] = await pool.query('SELECT * FROM posts ORDER BY created_at DESC');
+                const duration = Date.now() - start;
+                console.log(`GET /posts/search took ${duration}ms`);
+                return res.json(rows);
+              }
+              const [rows] = await pool.query(
+                'SELECT * FROM posts WHERE title LIKE ? OR content LIKE ? ORDER BY created_at DESC',
+                [`%${keyword}%`, `%${keyword}%`]
+              );
+              const duration = Date.now() - start;
+              console.log(`GET /posts/search took ${duration}ms`);
+              res.json(rows);
+            } catch (error) {
+              console.error('Error searching posts:', error);
+              res.status(500).json({ error: 'Failed to search posts' });
+            }
+          });
+          app.post('/posts', async (req, res) => {
+            const start = Date.now();
+            try {
+              const { title, content, author, category } = req.body;
+              const cat = category || 'general';
+              const [result] = await pool.query(
+                'INSERT INTO posts (title, content, author, category) VALUES (?, ?, ?, ?)',
+                [title, content, author, cat]
+              );
+              const duration = Date.now() - start;
+              console.log(`POST /posts took ${duration}ms`);
+              res.status(201).json({ id: result.insertId, title, content, author, category: cat });
+            } catch (error) {
+              console.error('Error creating post:', error);
+              res.status(500).json({ error: 'Failed to create post' });
+            }
+          });
+          app.delete('/posts/:id', async (req, res) => {
+            const start = Date.now();
+            try {
+              const { id } = req.params;
+              const [result] = await pool.query('DELETE FROM posts WHERE id = ?', [id]);
+              if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Post not found' });
+              }
+              const duration = Date.now() - start;
+              console.log(`DELETE /posts/${id} took ${duration}ms`);
+              res.status(200).json({ message: 'Post deleted successfully' });
+            } catch (error) {
+              console.error('Error deleting post:', error);
+              res.status(500).json({ error: 'Failed to delete post' });
+            }
+          });
+          const port = process.env.API_PORT || 3000;
+          initDB().then(() => {
+            app.listen(port, '0.0.0.0', () => {
+              console.log(`Blog API running on port ${port}`);
+              console.log(`Metrics endpoint at http://localhost:${port}/metrics`);
+            });
+          }).catch(err => {
+            console.error('Failed to initialize database:', err);
+            process.exit(1);
+          });
+          SRV
+          node server.js
+        env:
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: blog-api-config
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: blog-api-config
+              key: DB_PORT
+        - name: API_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: blog-api-config
+              key: API_PORT
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: blog-mysql-secret
+              key: user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: blog-mysql-secret
+              key: password
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: blog-mysql-secret
+              key: database
+        ports:
+        - containerPort: 3000
+          name: http
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-api
+  namespace: blog-platform
+  labels:
+    app: blog
+    tier: backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    name: http
+  selector:
+    app: blog
+    tier: backend

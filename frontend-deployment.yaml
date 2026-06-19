@@ -1,0 +1,2301 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog-frontend
+  namespace: blog-platform
+  labels:
+    app: blog
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: blog
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: blog
+        tier: frontend
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cat > /usr/share/nginx/html/index.html << 'EOF'
+              <!DOCTYPE html>
+              <html lang="zh-CN">
+              <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>KubeBlog 云原生博客系统</title>
+                <style>
+                  :root {
+                    --primary: #2563eb;
+                    --secondary: #06b6d4;
+                    --bg: #f8fafc;
+                    --bg-soft: #eef4ff;
+                    --surface: rgba(255, 255, 255, 0.82);
+                    --surface-strong: rgba(255, 255, 255, 0.94);
+                    --surface-dark: rgba(15, 23, 42, 0.78);
+                    --line: rgba(148, 163, 184, 0.22);
+                    --text: #0f172a;
+                    --text-soft: #475569;
+                    --text-muted: #64748b;
+                    --success: #22c55e;
+                    --warning: #f59e0b;
+                    --danger: #ef4444;
+                    --info: #0ea5e9;
+                    --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.12);
+                    --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.08);
+                    --radius-xl: 24px;
+                    --radius-lg: 18px;
+                    --radius-md: 14px;
+                    --radius-sm: 10px;
+                  }
+
+                  * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                  }
+
+                  html,
+                  body {
+                    width: 100%;
+                    height: 100%;
+                    overflow: hidden;
+                  }
+
+                  body {
+                    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+                    color: var(--text);
+                    background:
+                      radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 30%),
+                      radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.12), transparent 26%),
+                      linear-gradient(180deg, #f8fbff 0%, #eff6ff 45%, #f8fafc 100%);
+                  }
+
+                  body::before,
+                  body::after {
+                    content: "";
+                    position: fixed;
+                    border-radius: 999px;
+                    filter: blur(70px);
+                    pointer-events: none;
+                    z-index: 0;
+                  }
+
+                  body::before {
+                    width: 260px;
+                    height: 260px;
+                    top: -80px;
+                    left: -40px;
+                    background: rgba(37, 99, 235, 0.15);
+                  }
+
+                  body::after {
+                    width: 220px;
+                    height: 220px;
+                    right: -50px;
+                    bottom: -50px;
+                    background: rgba(6, 182, 212, 0.12);
+                  }
+
+                  .app-shell {
+                    position: relative;
+                    z-index: 1;
+                    width: min(1480px, calc(100vw - 24px));
+                    height: min(960px, calc(100dvh - 24px));
+                    margin: 12px auto;
+                    background: rgba(255, 255, 255, 0.5);
+                    border: 1px solid rgba(255, 255, 255, 0.7);
+                    border-radius: 28px;
+                    box-shadow: var(--shadow-lg);
+                    backdrop-filter: blur(18px);
+                    overflow: hidden;
+                    display: grid;
+                    grid-template-rows: auto 1fr;
+                  }
+
+                  .topbar {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 20px;
+                    padding: 16px 24px;
+                    background: rgba(255, 255, 255, 0.72);
+                    border-bottom: 1px solid var(--line);
+                    backdrop-filter: blur(14px);
+                  }
+
+                  .brand {
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    min-width: 0;
+                  }
+
+                  .brand-mark {
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 14px;
+                    background: linear-gradient(135deg, var(--primary), var(--secondary));
+                    color: #fff;
+                    display: grid;
+                    place-items: center;
+                    font-weight: 800;
+                    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25);
+                    flex: none;
+                  }
+
+                  .brand-copy {
+                    min-width: 0;
+                  }
+
+                  .brand-copy h1 {
+                    font-size: 20px;
+                    font-weight: 800;
+                    letter-spacing: 0.01em;
+                    white-space: nowrap;
+                  }
+
+                  .brand-copy p {
+                    color: var(--text-muted);
+                    font-size: 12px;
+                    margin-top: 4px;
+                    white-space: nowrap;
+                  }
+
+                  .nav-tabs {
+                    display: flex;
+                    gap: 8px;
+                    background: rgba(255, 255, 255, 0.75);
+                    border: 1px solid rgba(148, 163, 184, 0.18);
+                    padding: 6px;
+                    border-radius: 999px;
+                  }
+
+                  .nav-tab {
+                    border: none;
+                    background: transparent;
+                    color: var(--text-soft);
+                    padding: 10px 16px;
+                    border-radius: 999px;
+                    cursor: pointer;
+                    font-weight: 700;
+                    font-size: 14px;
+                    transition: 0.2s ease;
+                  }
+
+                  .nav-tab.active {
+                    background: linear-gradient(135deg, var(--primary), var(--secondary));
+                    color: #fff;
+                    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+                  }
+
+                  .topbar-side {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                  }
+
+                  .status-pill {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 10px 14px;
+                    border-radius: 999px;
+                    background: rgba(34, 197, 94, 0.1);
+                    color: #15803d;
+                    font-size: 13px;
+                    font-weight: 700;
+                    border: 1px solid rgba(34, 197, 94, 0.18);
+                  }
+
+                  .status-dot {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 999px;
+                    background: currentColor;
+                    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.12);
+                  }
+
+                  .clock {
+                    color: var(--text-muted);
+                    font-size: 13px;
+                    font-weight: 600;
+                    min-width: 150px;
+                    text-align: right;
+                  }
+
+                  .main {
+                    min-height: 0;
+                    overflow: hidden;
+                    padding: 18px;
+                  }
+
+                  .tab-panel {
+                    height: 100%;
+                    display: none;
+                    min-height: 0;
+                  }
+
+                  .tab-panel.active {
+                    display: block;
+                  }
+
+                  .home-layout,
+                  .status-layout {
+                    height: 100%;
+                    display: grid;
+                    grid-template-rows: auto auto 1fr;
+                    gap: 16px;
+                    min-height: 0;
+                  }
+
+                  .manage-layout {
+                    height: 100%;
+                    display: grid;
+                    grid-template-columns: minmax(0, 1.2fr) 380px;
+                    gap: 16px;
+                    min-height: 0;
+                  }
+
+                  .hero {
+                    position: relative;
+                    overflow: hidden;
+                    border-radius: var(--radius-xl);
+                    padding: 28px;
+                    color: #fff;
+                    background:
+                      radial-gradient(circle at top right, rgba(255,255,255,0.18), transparent 22%),
+                      linear-gradient(135deg, #0f172a 0%, #1d4ed8 42%, #0891b2 100%);
+                    box-shadow: var(--shadow-md);
+                    display: grid;
+                    grid-template-columns: 1.25fr 0.95fr;
+                    gap: 24px;
+                  }
+
+                  .hero::after {
+                    content: "";
+                    position: absolute;
+                    width: 280px;
+                    height: 280px;
+                    right: -80px;
+                    top: -80px;
+                    border-radius: 999px;
+                    background: rgba(255, 255, 255, 0.08);
+                    filter: blur(8px);
+                  }
+
+                  .hero-copy {
+                    position: relative;
+                    z-index: 1;
+                  }
+
+                  .hero-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 12px;
+                    border-radius: 999px;
+                    background: rgba(255, 255, 255, 0.12);
+                    font-size: 12px;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    margin-bottom: 14px;
+                  }
+
+                  .hero h2 {
+                    font-size: clamp(28px, 3.2vw, 40px);
+                    line-height: 1.12;
+                    margin-bottom: 14px;
+                    font-weight: 900;
+                  }
+
+                  .hero p {
+                    color: rgba(255, 255, 255, 0.86);
+                    line-height: 1.8;
+                    font-size: 15px;
+                    max-width: 720px;
+                  }
+
+                  .hero-highlights {
+                    margin-top: 22px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                  }
+
+                  .highlight-chip {
+                    padding: 10px 14px;
+                    border-radius: 999px;
+                    background: rgba(255, 255, 255, 0.12);
+                    border: 1px solid rgba(255, 255, 255, 0.16);
+                    font-size: 13px;
+                    font-weight: 700;
+                  }
+
+                  .hero-side {
+                    position: relative;
+                    z-index: 1;
+                    display: grid;
+                    gap: 12px;
+                    align-content: center;
+                  }
+
+                  .hero-side-card {
+                    padding: 16px 18px;
+                    border-radius: 18px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.14);
+                    backdrop-filter: blur(10px);
+                  }
+
+                  .hero-side-card span {
+                    display: block;
+                    color: rgba(255, 255, 255, 0.76);
+                    font-size: 12px;
+                    margin-bottom: 8px;
+                  }
+
+                  .hero-side-card strong {
+                    display: block;
+                    font-size: 18px;
+                    font-weight: 800;
+                  }
+
+                  .overview-grid,
+                  .status-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
+                    gap: 14px;
+                  }
+
+                  .card {
+                    background: var(--surface);
+                    border: 1px solid rgba(255, 255, 255, 0.9);
+                    border-radius: var(--radius-lg);
+                    box-shadow: var(--shadow-md);
+                    backdrop-filter: blur(14px);
+                  }
+
+                  .overview-card,
+                  .status-card {
+                    padding: 18px;
+                  }
+
+                  .card-label {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                    margin-bottom: 12px;
+                  }
+
+                  .card-label span {
+                    color: var(--text-muted);
+                    font-size: 12px;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                    font-weight: 700;
+                  }
+
+                  .card-value {
+                    font-size: 30px;
+                    font-weight: 900;
+                    color: var(--text);
+                    line-height: 1;
+                  }
+
+                  .card-desc {
+                    margin-top: 10px;
+                    color: var(--text-soft);
+                    font-size: 13px;
+                    line-height: 1.7;
+                  }
+
+                  .badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 6px 10px;
+                    border-radius: 999px;
+                    font-size: 12px;
+                    font-weight: 700;
+                    white-space: nowrap;
+                  }
+
+                  .badge.success {
+                    color: #15803d;
+                    background: rgba(34, 197, 94, 0.12);
+                  }
+
+                  .badge.warning {
+                    color: #b45309;
+                    background: rgba(245, 158, 11, 0.14);
+                  }
+
+                  .badge.danger {
+                    color: #b91c1c;
+                    background: rgba(239, 68, 68, 0.12);
+                  }
+
+                  .badge.info {
+                    color: #0369a1;
+                    background: rgba(14, 165, 233, 0.12);
+                  }
+
+                  .home-bottom {
+                    min-height: 0;
+                    display: grid;
+                    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+                    gap: 16px;
+                  }
+
+                  .panel-card {
+                    min-height: 0;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                  }
+
+                  .panel-header {
+                    padding: 18px 20px 14px;
+                    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                  }
+
+                  .panel-header h3 {
+                    font-size: 18px;
+                    font-weight: 800;
+                  }
+
+                  .panel-header p {
+                    color: var(--text-muted);
+                    font-size: 13px;
+                    margin-top: 4px;
+                  }
+
+                  .panel-body {
+                    min-height: 0;
+                    overflow-y: auto;
+                    padding: 16px 20px 20px;
+                  }
+
+                  .panel-body::-webkit-scrollbar,
+                  .list-scroll::-webkit-scrollbar,
+                  .editor-scroll::-webkit-scrollbar {
+                    width: 10px;
+                  }
+
+                  .panel-body::-webkit-scrollbar-thumb,
+                  .list-scroll::-webkit-scrollbar-thumb,
+                  .editor-scroll::-webkit-scrollbar-thumb {
+                    background: rgba(148, 163, 184, 0.3);
+                    border-radius: 999px;
+                  }
+
+                  .quick-list {
+                    display: grid;
+                    gap: 12px;
+                  }
+
+                  .quick-post {
+                    padding: 16px;
+                    border-radius: 16px;
+                    background: rgba(248, 250, 252, 0.86);
+                    border: 1px solid rgba(226, 232, 240, 0.9);
+                  }
+
+                  .quick-post h4 {
+                    font-size: 16px;
+                    font-weight: 800;
+                    margin-bottom: 8px;
+                    line-height: 1.5;
+                  }
+
+                  .quick-post .meta {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px 12px;
+                    color: var(--text-muted);
+                    font-size: 12px;
+                    margin-bottom: 10px;
+                  }
+
+                  .quick-post .excerpt {
+                    color: var(--text-soft);
+                    font-size: 14px;
+                    line-height: 1.8;
+                  }
+
+                  .architecture-list {
+                    display: grid;
+                    gap: 12px;
+                  }
+
+                  .architecture-item {
+                    padding: 16px;
+                    border-radius: 16px;
+                    background: linear-gradient(180deg, rgba(239, 246, 255, 0.94), rgba(248, 250, 252, 0.94));
+                    border: 1px solid rgba(191, 219, 254, 0.7);
+                  }
+
+                  .architecture-item strong {
+                    display: block;
+                    font-size: 15px;
+                    margin-bottom: 6px;
+                  }
+
+                  .architecture-item p {
+                    color: var(--text-soft);
+                    font-size: 13px;
+                    line-height: 1.75;
+                  }
+
+                  .list-card,
+                  .editor-card {
+                    min-height: 0;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                  }
+
+                  .list-card .panel-header,
+                  .editor-card .panel-header {
+                    padding-bottom: 16px;
+                  }
+
+                  .toolbar {
+                    padding: 16px 18px;
+                    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) 140px auto auto;
+                    gap: 10px;
+                  }
+
+                  .search-box,
+                  .select-box {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 0 14px;
+                    min-height: 46px;
+                    border-radius: 14px;
+                    border: 1px solid rgba(148, 163, 184, 0.22);
+                    background: rgba(255, 255, 255, 0.82);
+                  }
+
+                  .search-box input,
+                  .select-box select,
+                  .form-group input,
+                  .form-group select,
+                  .form-group textarea {
+                    width: 100%;
+                    border: none;
+                    outline: none;
+                    background: transparent;
+                    color: var(--text);
+                    font-size: 14px;
+                    font-family: inherit;
+                  }
+
+                  .toolbar-tag {
+                    color: var(--text-muted);
+                    font-size: 12px;
+                    font-weight: 700;
+                    white-space: nowrap;
+                  }
+
+                  .btn,
+                  .ghost-btn,
+                  .danger-btn,
+                  .tiny-btn,
+                  .tab-action {
+                    border: none;
+                    border-radius: 14px;
+                    cursor: pointer;
+                    transition: 0.2s ease;
+                    font-weight: 800;
+                    font-family: inherit;
+                  }
+
+                  .btn,
+                  .ghost-btn,
+                  .tab-action {
+                    min-height: 46px;
+                    padding: 0 18px;
+                  }
+
+                  .btn {
+                    color: #fff;
+                    background: linear-gradient(135deg, var(--primary), var(--secondary));
+                    box-shadow: 0 14px 24px rgba(37, 99, 235, 0.18);
+                  }
+
+                  .btn:hover,
+                  .ghost-btn:hover,
+                  .danger-btn:hover,
+                  .tiny-btn:hover,
+                  .tab-action:hover {
+                    transform: translateY(-1px);
+                  }
+
+                  .ghost-btn {
+                    color: var(--text-soft);
+                    background: rgba(241, 245, 249, 0.9);
+                    border: 1px solid rgba(226, 232, 240, 0.95);
+                  }
+
+                  .tab-action {
+                    color: var(--primary);
+                    background: rgba(37, 99, 235, 0.08);
+                    border: 1px solid rgba(37, 99, 235, 0.15);
+                  }
+
+                  .danger-btn {
+                    min-height: 38px;
+                    padding: 0 14px;
+                    color: #b91c1c;
+                    background: rgba(239, 68, 68, 0.08);
+                    border: 1px solid rgba(239, 68, 68, 0.16);
+                    border-radius: 12px;
+                  }
+
+                  .tiny-btn {
+                    min-height: 34px;
+                    padding: 0 12px;
+                    color: var(--primary);
+                    background: rgba(37, 99, 235, 0.08);
+                    border: 1px solid rgba(37, 99, 235, 0.15);
+                    border-radius: 12px;
+                    font-size: 12px;
+                  }
+
+                  .list-scroll,
+                  .editor-scroll {
+                    min-height: 0;
+                    overflow-y: auto;
+                  }
+
+                  .post-list {
+                    padding: 18px;
+                    display: grid;
+                    gap: 14px;
+                  }
+
+                  .post-card {
+                    padding: 18px;
+                    border-radius: 18px;
+                    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(248,250,252,0.95));
+                    border: 1px solid rgba(226, 232, 240, 0.95);
+                    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04);
+                  }
+
+                  .post-head {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 16px;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+                  }
+
+                  .post-title {
+                    font-size: 18px;
+                    font-weight: 800;
+                    line-height: 1.5;
+                    color: var(--text);
+                  }
+
+                  .post-meta {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px 12px;
+                    color: var(--text-muted);
+                    font-size: 12px;
+                    margin-bottom: 12px;
+                  }
+
+                  .category-pill {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 6px 10px;
+                    border-radius: 999px;
+                    font-size: 12px;
+                    font-weight: 800;
+                    background: rgba(37, 99, 235, 0.08);
+                    color: var(--primary);
+                    border: 1px solid rgba(37, 99, 235, 0.12);
+                  }
+
+                  .post-excerpt {
+                    color: var(--text-soft);
+                    font-size: 14px;
+                    line-height: 1.85;
+                    white-space: pre-wrap;
+                    margin-bottom: 14px;
+                  }
+
+                  .post-actions {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                  }
+
+                  .post-actions-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    color: var(--text-muted);
+                    font-size: 12px;
+                  }
+
+                  .pagination {
+                    padding: 14px 18px 18px;
+                    border-top: 1px solid rgba(148, 163, 184, 0.16);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                  }
+
+                  .pagination-info {
+                    color: var(--text-muted);
+                    font-size: 13px;
+                  }
+
+                  .pagination-actions {
+                    display: flex;
+                    gap: 10px;
+                  }
+
+                  .pagination button {
+                    min-height: 40px;
+                    min-width: 96px;
+                    padding: 0 14px;
+                    border-radius: 12px;
+                    border: 1px solid rgba(148, 163, 184, 0.22);
+                    background: rgba(255, 255, 255, 0.82);
+                    color: var(--text-soft);
+                    cursor: pointer;
+                    font-weight: 800;
+                  }
+
+                  .pagination button:disabled {
+                    opacity: 0.45;
+                    cursor: not-allowed;
+                  }
+
+                  .editor-card .panel-body {
+                    padding: 0;
+                  }
+
+                  .editor-scroll {
+                    padding: 18px;
+                  }
+
+                  .editor-note {
+                    margin-bottom: 18px;
+                    padding: 16px;
+                    border-radius: 16px;
+                    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(6, 182, 212, 0.08));
+                    border: 1px solid rgba(125, 211, 252, 0.28);
+                  }
+
+                  .editor-note strong {
+                    display: block;
+                    margin-bottom: 6px;
+                    font-size: 15px;
+                  }
+
+                  .editor-note p {
+                    color: var(--text-soft);
+                    font-size: 13px;
+                    line-height: 1.75;
+                  }
+
+                  .form-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 14px;
+                  }
+
+                  .form-group {
+                    margin-bottom: 14px;
+                  }
+
+                  .form-group label {
+                    display: block;
+                    margin-bottom: 8px;
+                    color: var(--text-soft);
+                    font-size: 13px;
+                    font-weight: 700;
+                  }
+
+                  .form-field {
+                    min-height: 46px;
+                    border-radius: 14px;
+                    border: 1px solid rgba(148, 163, 184, 0.22);
+                    background: rgba(255, 255, 255, 0.9);
+                    padding: 0 14px;
+                    display: flex;
+                    align-items: center;
+                  }
+
+                  .form-field.textarea {
+                    min-height: 200px;
+                    padding: 12px 14px;
+                    align-items: stretch;
+                  }
+
+                  .form-field textarea {
+                    resize: vertical;
+                    min-height: 176px;
+                    line-height: 1.85;
+                  }
+
+                  .message {
+                    margin-bottom: 14px;
+                    padding: 12px 14px;
+                    border-radius: 14px;
+                    font-size: 13px;
+                    line-height: 1.7;
+                  }
+
+                  .message.success {
+                    background: rgba(34, 197, 94, 0.1);
+                    color: #15803d;
+                    border: 1px solid rgba(34, 197, 94, 0.16);
+                  }
+
+                  .message.error {
+                    background: rgba(239, 68, 68, 0.1);
+                    color: #b91c1c;
+                    border: 1px solid rgba(239, 68, 68, 0.16);
+                  }
+
+                  .empty-state,
+                  .loading-state {
+                    min-height: 220px;
+                    display: grid;
+                    place-items: center;
+                    text-align: center;
+                    padding: 28px;
+                    color: var(--text-muted);
+                    border-radius: 18px;
+                    border: 1px dashed rgba(148, 163, 184, 0.25);
+                    background: rgba(248, 250, 252, 0.72);
+                  }
+
+                  .empty-state strong,
+                  .loading-state strong {
+                    display: block;
+                    color: var(--text);
+                    font-size: 18px;
+                    margin-bottom: 8px;
+                  }
+
+                  .status-layout .panel-card {
+                    min-height: 0;
+                  }
+
+                  .status-detail {
+                    min-height: 0;
+                    display: grid;
+                    grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+                    gap: 16px;
+                  }
+
+                  .status-list {
+                    display: grid;
+                    gap: 12px;
+                  }
+
+                  .status-item {
+                    padding: 16px;
+                    border-radius: 16px;
+                    background: rgba(248, 250, 252, 0.88);
+                    border: 1px solid rgba(226, 232, 240, 0.9);
+                  }
+
+                  .status-item-head {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                    margin-bottom: 8px;
+                  }
+
+                  .status-item strong {
+                    font-size: 15px;
+                  }
+
+                  .status-item p {
+                    color: var(--text-soft);
+                    font-size: 13px;
+                    line-height: 1.75;
+                  }
+
+                  .metrics-box {
+                    padding: 18px;
+                    border-radius: 18px;
+                    background: linear-gradient(180deg, #0f172a, #111827);
+                    color: #dbeafe;
+                    min-height: 240px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                  }
+
+                  .metrics-box strong {
+                    font-size: 16px;
+                  }
+
+                  .metrics-box p {
+                    color: #93c5fd;
+                    font-size: 13px;
+                    line-height: 1.8;
+                  }
+
+                  .metrics-list {
+                    display: grid;
+                    gap: 10px;
+                    font-size: 13px;
+                  }
+
+                  .metrics-list div {
+                    padding: 10px 12px;
+                    border-radius: 12px;
+                    background: rgba(255, 255, 255, 0.06);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                  }
+
+                  .modal-mask {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(15, 23, 42, 0.42);
+                    backdrop-filter: blur(6px);
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10;
+                    padding: 20px;
+                  }
+
+                  .modal-mask.show {
+                    display: flex;
+                  }
+
+                  .modal {
+                    width: min(460px, 100%);
+                    background: rgba(255, 255, 255, 0.96);
+                    border-radius: 22px;
+                    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.22);
+                    border: 1px solid rgba(255, 255, 255, 0.9);
+                    overflow: hidden;
+                  }
+
+                  .modal-head {
+                    padding: 20px 22px 12px;
+                  }
+
+                  .modal-head h4 {
+                    font-size: 20px;
+                    font-weight: 900;
+                  }
+
+                  .modal-body {
+                    padding: 0 22px 20px;
+                    color: var(--text-soft);
+                    line-height: 1.8;
+                    font-size: 14px;
+                  }
+
+                  .modal-actions {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 10px;
+                    padding: 0 22px 22px;
+                  }
+
+                  @media (max-width: 1180px) {
+                    .manage-layout,
+                    .home-bottom,
+                    .status-detail,
+                    .hero {
+                      grid-template-columns: 1fr;
+                    }
+
+                    .overview-grid,
+                    .status-grid {
+                      grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+                  }
+
+                  @media (max-width: 900px) {
+                    .app-shell {
+                      width: calc(100vw - 12px);
+                      height: calc(100dvh - 12px);
+                      margin: 6px auto;
+                      border-radius: 20px;
+                    }
+
+                    .topbar {
+                      flex-wrap: wrap;
+                      justify-content: flex-start;
+                    }
+
+                    .clock {
+                      text-align: left;
+                      min-width: auto;
+                    }
+
+                    .toolbar {
+                      grid-template-columns: 1fr;
+                    }
+
+                    .form-grid {
+                      grid-template-columns: 1fr;
+                    }
+
+                    .overview-grid,
+                    .status-grid {
+                      grid-template-columns: 1fr;
+                    }
+                  }
+
+                  @media (max-width: 640px) {
+                    .topbar {
+                      padding: 14px;
+                    }
+
+                    .main {
+                      padding: 12px;
+                    }
+
+                    .hero,
+                    .overview-card,
+                    .status-card,
+                    .panel-header,
+                    .panel-body,
+                    .toolbar,
+                    .editor-scroll,
+                    .post-list,
+                    .pagination {
+                      padding-left: 14px;
+                      padding-right: 14px;
+                    }
+
+                    .brand-copy p {
+                      display: none;
+                    }
+
+                    .nav-tabs {
+                      width: 100%;
+                      justify-content: space-between;
+                    }
+
+                    .nav-tab {
+                      flex: 1;
+                      padding-left: 8px;
+                      padding-right: 8px;
+                    }
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="app-shell">
+                  <header class="topbar">
+                    <div class="brand">
+                      <div class="brand-mark">K</div>
+                      <div class="brand-copy">
+                        <h1>KubeBlog 云原生博客系统</h1>
+                        <p>面向课程设计展示的 Kubernetes 云原生博客管理平台</p>
+                      </div>
+                    </div>
+
+                    <nav class="nav-tabs">
+                      <button class="nav-tab active" data-tab="home">博客首页</button>
+                      <button class="nav-tab" data-tab="manage">文章管理</button>
+                      <button class="nav-tab" data-tab="status">系统状态</button>
+                    </nav>
+
+                    <div class="topbar-side">
+                      <div class="status-pill">
+                        <span class="status-dot"></span>
+                        <span id="topHealthText">系统检测中</span>
+                      </div>
+                      <div class="clock" id="clockText">--</div>
+                    </div>
+                  </header>
+
+                  <main class="main">
+                    <section class="tab-panel active" id="tab-home">
+                      <div class="home-layout">
+                        <section class="hero">
+                          <div class="hero-copy">
+                            <div class="hero-badge">Cloud Native Dashboard</div>
+                            <h2>云原生博客平台 · Kubernetes 全栈实践</h2>
+                            <p>
+                              基于 Kubernetes 部署的高可用博客系统，涵盖容器化、多副本、自动恢复、持久化存储与监控指标，完整实践云                              原生核心技术。
+                            </p>
+                            <div class="hero-highlights">
+                              <div class="highlight-chip">Kubernetes 部署</div>
+                              <div class="highlight-chip">API 健康检查</div>
+                              <div class="highlight-chip">数据库就绪状态</div>
+                              <div class="highlight-chip">Prometheus Metrics</div>
+                              <div class="highlight-chip">后台管理体验</div>
+                            </div>
+                          </div>
+
+                          <div class="hero-side">
+                            <div class="hero-side-card">
+                              <span>平台名称</span>
+                              <strong>KubeBlog 云原生博客系统</strong>
+                            </div>
+                            <div class="hero-side-card">
+                              <span>定位</span>
+                              <strong>轻量级内容管理 + 云原生展示面板</strong>
+                            </div>
+                            <div class="hero-side-card">
+                              <span>当前模式</span>
+                              <strong id="heroModeText">系统初始化中</strong>
+                            </div>
+                          </div>
+                        </section>
+
+                        <section class="overview-grid">
+                          <article class="card overview-card">
+                            <div class="card-label">
+                              <span>文章总数</span>
+                              <div class="badge info">内容资产</div>
+                            </div>
+                            <div class="card-value" id="statTotalPosts">0</div>
+                            <div class="card-desc">文章数据统计，用于展示平台内容规模。</div>
+                          </article>
+
+                          <article class="card overview-card">
+                            <div class="card-label">
+                              <span>API 健康</span>
+                              <div class="badge" id="statApiBadge">检测中</div>
+                            </div>
+                            <div class="card-value" id="statApiValue">--</div>
+                            <div class="card-desc" id="statApiDesc">正在检查 /api/health 接口响应状态。</div>
+                          </article>
+
+                          <article class="card overview-card">
+                            <div class="card-label">
+                              <span>数据库就绪</span>
+                              <div class="badge" id="statReadyBadge">检测中</div>
+                            </div>
+                            <div class="card-value" id="statReadyValue">--</div>
+                            <div class="card-desc" id="statReadyDesc">正在检查 /api/ready 接口可用性。</div>
+                          </article>
+
+                          <article class="card overview-card">
+                            <div class="card-label">
+                              <span>监控入口</span>
+                              <div class="badge" id="statMetricsBadge">检测中</div>
+                            </div>
+                            <div class="card-value" id="statMetricsValue">--</div>
+                            <div class="card-desc" id="statMetricsDesc">用于展示 /api/metrics 暴露情况。</div>
+                          </article>
+                        </section>
+
+                        <section class="home-bottom">
+                          <article class="card panel-card">
+                            <div class="panel-header">
+                              <div>
+                                <h3>最新文章概览</h3>
+                              </div>
+                              <button class="tab-action" data-jump-tab="manage">进入文章管理</button>
+                            </div>
+                            <div class="panel-body" id="homeRecentContainer">
+                              <div class="loading-state">
+                                <div>
+                                  <strong>正在加载文章</strong>
+                                  <div>首页概览正在同步内容列表。</div>
+                                </div>
+                              </div>
+                            </div>
+                          </article>
+
+                          <article class="card panel-card">
+                            <div class="panel-header">
+                              <div>
+                                <h3>云原生架构亮点</h3>
+                              </div>
+                            </div>
+                            <div class="panel-body">
+                              <div class="architecture-list">
+                                <div class="architecture-item">
+                                  <strong>前端服务层</strong>
+                                  <p>使用 Nginx 提供静态前端入口，通过 /api/ 反向代理到博客后端服务。</p>
+                                </div>
+                                <div class="architecture-item">
+                                  <strong>内容接口层</strong>
+                                  <p>文章列表、搜索、发布、删除等能力统一由博客 API 提供，构成轻量级 CMS 基础能力。</p>
+                                </div>
+                                <div class="architecture-item">
+                                  <strong>系统状态层</strong>
+                                  <p>通过 /api/health、/api/ready 与 /api/metrics 把云原生系统可观测性展示到界面。</p>
+                                </div>
+                                <div class="architecture-item">
+                                  <strong>Kubernetes 部署层</strong>
+                                  <p>前端以 Deployment + Service 方式运行，体现副本部署、服务发现和集群内联通能力。</p>
+                                </div>
+                              </div>
+                            </div>
+                          </article>
+                        </section>
+                      </div>
+                    </section>
+
+                    <section class="tab-panel" id="tab-manage">
+                      <div class="manage-layout">
+                        <article class="card list-card">
+                          <div class="panel-header">
+                            <div>
+                              <h3>文章管理</h3>
+                              <p>搜索、筛选、分页、展开全文与删除操作集中在此区域。</p>
+                            </div>
+                            <div class="badge info" id="listModeBadge">全部文章</div>
+                          </div>
+
+                          <div class="toolbar">
+                            <div class="search-box">
+                              <span class="toolbar-tag">搜索</span>
+                              <input type="text" id="searchInput" placeholder="输入标题或正文关键词..." />
+                            </div>
+
+                            <div class="select-box">
+                              <span class="toolbar-tag">分类</span>
+                              <select id="categoryFilter">
+                                <option value="">全部分类</option>
+                                <option value="技术">技术</option>
+                                <option value="生活">生活</option>
+                                <option value="Kubernetes">Kubernetes</option>
+                                <option value="云原生">云原生</option>
+                                <option value="后端">后端</option>
+                                <option value="其他">其他</option>
+                                <option value="General">General</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Life">Life</option>
+                                <option value="Other">Other</option>
+                              </select>
+                            </div>
+
+                            <button class="btn" id="searchBtn">搜索文章</button>
+                            <button class="ghost-btn" id="resetBtn">重置条件</button>
+                          </div>
+
+                          <div class="list-scroll">
+                            <div class="post-list" id="postsContainer">
+                              <div class="loading-state">
+                                <div>
+                                  <strong>正在加载文章列表</strong>
+                                  <div>请稍候，系统正在连接博客接口。</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="pagination" id="pagination"></div>
+                        </article>
+
+                        <article class="card editor-card">
+                          <div class="panel-header">
+                            <div>
+                              <h3>发布文章</h3>
+                              <p>以后台编辑器面板的形式发布新内容。</p>
+                            </div>
+                            <div class="badge success">内容发布</div>
+                          </div>
+
+                          <div class="panel-body">
+                            <div class="editor-scroll">
+                              <div id="message"></div>
+
+                              <div class="editor-note">
+                                <strong>发布说明</strong>
+                                <p>
+                                  发布成功后自动刷新文章列表，并回到第一页展示最新内容。
+                                </p>
+                              </div>
+
+                              <form id="postForm">
+                                <div class="form-grid">
+                                  <div class="form-group">
+                                    <label for="title">文章标题</label>
+                                    <div class="form-field">
+                                      <input type="text" id="title" placeholder="请输入文章标题，例如：Kubernetes 服务发现实践" required />
+                                    </div>
+                                  </div>
+
+                                  <div class="form-group">
+                                    <label for="author">作者</label>
+                                    <div class="form-field">
+                                      <input type="text" id="author" placeholder="请输入作者名称" required />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div class="form-grid">
+                                  <div class="form-group">
+                                    <label for="categorySelect">分类</label>
+                                    <div class="form-field">
+                                      <select id="categorySelect">
+                                        <option value="技术">技术</option>
+                                        <option value="生活">生活</option>
+                                        <option value="Kubernetes">Kubernetes</option>
+                                        <option value="云原生">云原生</option>
+                                        <option value="后端">后端</option>
+                                        <option value="其他">其他</option>
+                                      </select>
+                                    </div>
+                                  </div>
+
+                                  <div class="form-group" id="otherCategoryGroup" style="display: none;">
+                                    <label for="otherCategory">自定义分类</label>
+                                    <div class="form-field">
+                                      <input type="text" id="otherCategory" placeholder="请输入自定义分类名称" />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div class="form-group">
+                                  <label for="content">正文内容</label>
+                                  <div class="form-field textarea">
+                                    <textarea id="content" placeholder="请输入正文内容，支持较长文本展示..." required></textarea>
+                                  </div>
+                                </div>
+
+                                <button type="submit" class="btn" style="width: 100%;">发布文章</button>
+                              </form>
+                            </div>
+                          </div>
+                        </article>
+                      </div>
+                    </section>
+
+                    <section class="tab-panel" id="tab-status">
+                      <div class="status-layout">
+                        <section class="overview-grid status-grid">
+                          <article class="card status-card">
+                            <div class="card-label">
+                              <span>前端服务</span>
+                              <div class="badge info">Nginx</div>
+                            </div>
+                            <div class="card-value">在线</div>
+                            <div class="card-desc">当前页面已成功加载，前端容器与静态服务处于正常工作状态。</div>
+                          </article>
+
+                          <article class="card status-card">
+                            <div class="card-label">
+                              <span>博客 API</span>
+                              <div class="badge" id="statusApiBadge">检测中</div>
+                            </div>
+                            <div class="card-value" id="statusApiValue">--</div>
+                            <div class="card-desc" id="statusApiDesc">正在检查 API 健康状态。</div>
+                          </article>
+
+                          <article class="card status-card">
+                            <div class="card-label">
+                              <span>数据库就绪</span>
+                              <div class="badge" id="statusReadyBadge">检测中</div>
+                            </div>
+                            <div class="card-value" id="statusReadyValue">--</div>
+                            <div class="card-desc" id="statusReadyDesc">正在检查数据库 readiness。</div>
+                          </article>
+
+                          <article class="card status-card">
+                            <div class="card-label">
+                              <span>监控指标</span>
+                              <div class="badge" id="statusMetricsBadge">检测中</div>
+                            </div>
+                            <div class="card-value" id="statusMetricsValue">--</div>
+                            <div class="card-desc" id="statusMetricsDesc">正在尝试访问 Prometheus 指标入口。</div>
+                          </article>
+                        </section>
+
+                        <section class="status-detail">
+                          <article class="card panel-card">
+                            <div class="panel-header">
+                              <div>
+                                <h3>云原生系统状态</h3>
+                              </div>
+                              <button class="btn" id="refreshStatusBtn">刷新状态</button>
+                            </div>
+                            <div class="panel-body">
+                              <div class="status-list">
+                                <div class="status-item">
+                                  <div class="status-item-head">
+                                    <strong>前端访问状态</strong>
+                                    <div class="badge success">正常</div>
+                                  </div>
+                                  <p>静态页面已加载完成，前端 Deployment 与 Service 已可访问。</p>
+                                </div>
+
+                                <div class="status-item">
+                                  <div class="status-item-head">
+                                    <strong>API 健康检查</strong>
+                                    <div class="badge" id="detailApiBadge">检测中</div>
+                                  </div>
+                                  <p id="detailApiText">系统正在读取 /api/health 响应。</p>
+                                </div>
+
+                                <div class="status-item">
+                                  <div class="status-item-head">
+                                    <strong>数据库就绪检查</strong>
+                                    <div class="badge" id="detailReadyBadge">检测中</div>
+                                  </div>
+                                  <p id="detailReadyText">系统正在读取 /api/ready 响应。</p>
+                                </div>
+
+                                <div class="status-item">
+                                  <div class="status-item-head">
+                                    <strong>文章内容规模</strong>
+                                    <div class="badge info">内容统计</div>
+                                  </div>
+                                  <p id="detailPostText">正在统计当前系统中的文章数量。</p>
+                                </div>
+                              </div>
+                            </div>
+                          </article>
+
+                          <article class="card panel-card">
+                            <div class="panel-header">
+                              <div>
+                                <h3>监控与架构说明</h3>
+                                <p>突出可观测性与课程设计特征。</p>
+                              </div>
+                            </div>
+                            <div class="panel-body">
+                              <div class="metrics-box">
+                                <strong>Prometheus Metrics 入口说明</strong>
+                                <p id="metricsIntroText">
+                                  `/api/metrics` 可作为监控抓取入口。如果接口已暴露，说明系统已具备基础可观测性能力。
+                                </p>
+                                <div class="metrics-list">
+                                  <div id="metricsStatusLine">指标入口状态：检测中</div>
+                                  <div>推荐展示项：HTTP 请求总数、接口响应耗时、数据库连接状态。</div>
+                                  <div>设计亮点：前端不只做CRUD，同时体现了健康检查、就绪检查与监控思路。</div>
+                                  <div>架构链路：Nginx 前端 -> Blog API -> 数据库 / Metrics 端点。</div>
+                                </div>
+                              </div>
+                            </div>
+                          </article>
+                        </section>
+                      </div>
+                    </section>
+                  </main>
+                </div>
+
+                <div class="modal-mask" id="confirmModal">
+                  <div class="modal">
+                    <div class="modal-head">
+                      <h4>确认删除文章</h4>
+                    </div>
+                    <div class="modal-body" id="confirmText">
+                      确定要删除这篇文章吗？此操作不可恢复。
+                    </div>
+                    <div class="modal-actions">
+                      <button class="ghost-btn" id="cancelDeleteBtn">取消</button>
+                      <button class="danger-btn" id="confirmDeleteBtn">确认删除</button>
+                    </div>
+                  </div>
+                </div>
+
+                <script>
+                  const API_URL = '/api';
+                  const PAGE_LIMIT = 10;
+
+                  let currentPage = 1;
+                  let totalPages = 1;
+                  let totalPosts = 0;
+                  let currentSearchKeyword = '';
+                  let currentCategoryFilter = '';
+                  let currentList = [];
+                  let deleteTargetId = null;
+
+                  const navTabs = document.querySelectorAll('.nav-tab');
+                  const tabPanels = document.querySelectorAll('.tab-panel');
+                  const jumpTabButtons = document.querySelectorAll('[data-jump-tab]');
+
+                  const topHealthText = document.getElementById('topHealthText');
+                  const clockText = document.getElementById('clockText');
+                  const heroModeText = document.getElementById('heroModeText');
+
+                  const statTotalPosts = document.getElementById('statTotalPosts');
+                  const statApiValue = document.getElementById('statApiValue');
+                  const statApiDesc = document.getElementById('statApiDesc');
+                  const statApiBadge = document.getElementById('statApiBadge');
+                  const statReadyValue = document.getElementById('statReadyValue');
+                  const statReadyDesc = document.getElementById('statReadyDesc');
+                  const statReadyBadge = document.getElementById('statReadyBadge');
+                  const statMetricsValue = document.getElementById('statMetricsValue');
+                  const statMetricsDesc = document.getElementById('statMetricsDesc');
+                  const statMetricsBadge = document.getElementById('statMetricsBadge');
+
+                  const statusApiValue = document.getElementById('statusApiValue');
+                  const statusApiDesc = document.getElementById('statusApiDesc');
+                  const statusApiBadge = document.getElementById('statusApiBadge');
+                  const statusReadyValue = document.getElementById('statusReadyValue');
+                  const statusReadyDesc = document.getElementById('statusReadyDesc');
+                  const statusReadyBadge = document.getElementById('statusReadyBadge');
+                  const statusMetricsValue = document.getElementById('statusMetricsValue');
+                  const statusMetricsDesc = document.getElementById('statusMetricsDesc');
+                  const statusMetricsBadge = document.getElementById('statusMetricsBadge');
+
+                  const detailApiBadge = document.getElementById('detailApiBadge');
+                  const detailApiText = document.getElementById('detailApiText');
+                  const detailReadyBadge = document.getElementById('detailReadyBadge');
+                  const detailReadyText = document.getElementById('detailReadyText');
+                  const detailPostText = document.getElementById('detailPostText');
+                  const metricsStatusLine = document.getElementById('metricsStatusLine');
+                  const metricsIntroText = document.getElementById('metricsIntroText');
+
+                  const postsContainer = document.getElementById('postsContainer');
+                  const pagination = document.getElementById('pagination');
+                  const homeRecentContainer = document.getElementById('homeRecentContainer');
+                  const listModeBadge = document.getElementById('listModeBadge');
+
+                  const postForm = document.getElementById('postForm');
+                  const messageDiv = document.getElementById('message');
+                  const categorySelect = document.getElementById('categorySelect');
+                  const otherCategoryGroup = document.getElementById('otherCategoryGroup');
+
+                  const searchInput = document.getElementById('searchInput');
+                  const categoryFilter = document.getElementById('categoryFilter');
+                  const confirmModal = document.getElementById('confirmModal');
+                  const confirmText = document.getElementById('confirmText');
+                  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+                  const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+                  function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text == null ? '' : String(text);
+                    return div.innerHTML;
+                  }
+
+                  function formatDateCN(value) {
+                    const date = new Date(value);
+                    if (Number.isNaN(date.getTime())) return '时间未知';
+                    const y = date.getFullYear();
+                    const m = String(date.getMonth() + 1).padStart(2, '0');
+                    const d = String(date.getDate()).padStart(2, '0');
+                    const h = String(date.getHours()).padStart(2, '0');
+                    const min = String(date.getMinutes()).padStart(2, '0');
+                    return `${y}年${m}月${d}日 ${h}:${min}`;
+                  }
+
+                  function formatClock() {
+                    const now = new Date();
+                    clockText.textContent = formatDateCN(now);
+                  }
+
+                  function getBadgeClassByState(ok, fallback = 'warning') {
+                    if (ok === true) return 'success';
+                    if (ok === false) return 'danger';
+                    return fallback;
+                  }
+
+                  function setBadge(el, text, cls) {
+                    if (!el) return;
+                    el.className = `badge ${cls}`;
+                    el.textContent = text;
+                  }
+
+                  function updateTopHealth(apiOk, readyOk) {
+                    if (apiOk && readyOk) {
+                      topHealthText.textContent = '系统运行正常';
+                    } else if (apiOk || readyOk) {
+                      topHealthText.textContent = '部分组件可用';
+                    } else {
+                      topHealthText.textContent = '系统状态待确认';
+                    }
+                  }
+
+                  function normalizeBooleanFromData(data) {
+                    if (typeof data === 'boolean') return data;
+                    if (typeof data === 'string') {
+                      const lower = data.toLowerCase();
+                      if (lower.includes('ok') || lower.includes('ready') || lower.includes('healthy') || lower.includes('up') || lower.includes('success')) return true;
+                      if (lower.includes('fail') || lower.includes('error') || lower.includes('down') || lower.includes('not ready')) return false;
+                    }
+                    if (data && typeof data === 'object') {
+                      const candidates = [data.ok, data.ready, data.healthy, data.status, data.message];
+                      for (const item of candidates) {
+                        const normalized = normalizeBooleanFromData(item);
+                        if (typeof normalized === 'boolean') return normalized;
+                      }
+                    }
+                    return null;
+                  }
+
+                  async function safeFetchJson(url) {
+                    const response = await fetch(url);
+                    const text = await response.text();
+                    let data;
+                    try {
+                      data = text ? JSON.parse(text) : null;
+                    } catch (error) {
+                      data = text;
+                    }
+                    return { ok: response.ok, status: response.status, data, rawText: text };
+                  }
+
+                  async function loadHealthStatus() {
+                    let apiState = null;
+                    let readyState = null;
+                    let metricsOk = null;
+
+                    try {
+                      const healthRes = await safeFetchJson(`${API_URL}/health`);
+                      apiState = healthRes.ok ? normalizeBooleanFromData(healthRes.data) : false;
+                      if (apiState === null) apiState = healthRes.ok;
+
+                      statApiValue.textContent = apiState ? '正常' : '异常';
+                      statApiDesc.textContent = `健康检查返回 HTTP ${healthRes.status}。`;
+                      setBadge(statApiBadge, apiState ? '健康' : '异常', getBadgeClassByState(apiState));
+
+                      statusApiValue.textContent = apiState ? '正常' : '异常';
+                      statusApiDesc.textContent = `接口健康检查已完成，HTTP 状态码 ${healthRes.status}。`;
+                      setBadge(statusApiBadge, apiState ? '健康' : '异常', getBadgeClassByState(apiState));
+                      setBadge(detailApiBadge, apiState ? '健康' : '异常', getBadgeClassByState(apiState));
+                      detailApiText.textContent = apiState
+                        ? `博客 API 健康检查通过，说明服务链路当前可用。`
+                        : `博客 API 健康检查未通过，请检查后端服务或接口代理配置。`;
+                    } catch (error) {
+                      apiState = false;
+                      statApiValue.textContent = '异常';
+                      statApiDesc.textContent = '无法访问 `/api/health`。';
+                      setBadge(statApiBadge, '异常', 'danger');
+
+                      statusApiValue.textContent = '异常';
+                      statusApiDesc.textContent = '无法访问 `/api/health`。';
+                      setBadge(statusApiBadge, '异常', 'danger');
+                      setBadge(detailApiBadge, '异常', 'danger');
+                      detailApiText.textContent = '无法访问健康检查接口，请检查后端服务或代理配置。';
+                    }
+
+                    try {
+                      const readyRes = await safeFetchJson(`${API_URL}/ready`);
+                      readyState = readyRes.ok ? normalizeBooleanFromData(readyRes.data) : false;
+                      if (readyState === null) readyState = readyRes.ok;
+
+                      statReadyValue.textContent = readyState ? '已就绪' : '未就绪';
+                      statReadyDesc.textContent = `就绪检查返回 HTTP ${readyRes.status}。`;
+                      setBadge(statReadyBadge, readyState ? '就绪' : '未就绪', getBadgeClassByState(readyState));
+
+                      statusReadyValue.textContent = readyState ? '已就绪' : '未就绪';
+                      statusReadyDesc.textContent = `数据库或依赖组件 readiness 检查已完成。`;
+                      setBadge(statusReadyBadge, readyState ? '就绪' : '未就绪', getBadgeClassByState(readyState));
+                      setBadge(detailReadyBadge, readyState ? '就绪' : '未就绪', getBadgeClassByState(readyState));
+                      detailReadyText.textContent = readyState
+                        ? '数据库依赖就绪，系统具备正常读写能力。'
+                        : '数据库或依赖尚未就绪，请检查后端启动与依赖连接情况。';
+                    } catch (error) {
+                      readyState = false;
+                      statReadyValue.textContent = '异常';
+                      statReadyDesc.textContent = '无法访问 `/api/ready`。';
+                      setBadge(statReadyBadge, '异常', 'danger');
+
+                      statusReadyValue.textContent = '异常';
+                      statusReadyDesc.textContent = '无法访问 `/api/ready`。';
+                      setBadge(statusReadyBadge, '异常', 'danger');
+                      setBadge(detailReadyBadge, '异常', 'danger');
+                      detailReadyText.textContent = '无法访问就绪检查接口，请确认数据库依赖或 readiness 路由。';
+                    }
+
+                    try {
+                      const metricsRes = await fetch(`${API_URL}/metrics`);
+                      metricsOk = metricsRes.ok;
+
+                      statMetricsValue.textContent = metricsOk ? '已暴露' : '未暴露';
+                      statMetricsDesc.textContent = metricsOk ? 'Prometheus 指标入口可访问。' : `指标入口返回 HTTP ${metricsRes.status}。`;
+                      setBadge(statMetricsBadge, metricsOk ? '可用' : '异常', getBadgeClassByState(metricsOk));
+
+                      statusMetricsValue.textContent = metricsOk ? '已暴露' : '未暴露';
+                      statusMetricsDesc.textContent = metricsOk ? '监控指标入口可访问，便于对接 Prometheus。' : `指标入口不可用或未开放。`;
+                      setBadge(statusMetricsBadge, metricsOk ? '可用' : '异常', getBadgeClassByState(metricsOk));
+
+                      metricsStatusLine.textContent = metricsOk
+                        ? '指标入口状态：已检测到 `/api/metrics`，可用于监控抓取。'
+                        : '指标入口状态：未成功访问 `/api/metrics`，可作为后续增强点。';
+                      metricsIntroText.textContent = metricsOk
+                        ? '当前系统已具备指标暴露入口，可以进一步接入 Prometheus / Grafana 形成完整可观测性方案。'
+                        : '当前未成功检测到指标入口，但页面已预留监控展示位，适合后续扩展可观测性能力。';
+                    } catch (error) {
+                      metricsOk = false;
+                      statMetricsValue.textContent = '异常';
+                      statMetricsDesc.textContent = '无法访问 `/api/metrics`。';
+                      setBadge(statMetricsBadge, '异常', 'danger');
+
+                      statusMetricsValue.textContent = '异常';
+                      statusMetricsDesc.textContent = '无法访问 `/api/metrics`。';
+                      setBadge(statusMetricsBadge, '异常', 'danger');
+
+                      metricsStatusLine.textContent = '指标入口状态：无法访问 `/api/metrics`。';
+                      metricsIntroText.textContent = '当前未检测到指标入口，请确认后端是否已暴露 metrics 接口。';
+                    }
+
+                    updateTopHealth(apiState, readyState);
+                    heroModeText.textContent =
+                      apiState && readyState
+                        ? '平台运行稳定，适合展示云原生博客能力'
+                        : '平台部分组件待确认，建议检查后端状态';
+                  }
+
+                  function summarizeContent(content, length = 120) {
+                    const text = String(content || '').replace(/\s+/g, ' ').trim();
+                    if (text.length <= length) {
+                      return {
+                        short: text || '暂无内容摘要。',
+                        full: text || '暂无内容摘要。',
+                        expandable: false
+                      };
+                    }
+                    return {
+                      short: `${text.slice(0, length)}...`,
+                      full: text,
+                      expandable: true
+                    };
+                  }
+
+                  function renderHomeRecent(posts) {
+                    if (!Array.isArray(posts) || posts.length === 0) {
+                      homeRecentContainer.innerHTML = `
+                        <div class="empty-state">
+                          <div>
+                            <strong>暂无文章内容</strong>
+                            <div>当前还没有可展示的文章，请先到“文章管理”中发布内容。</div>
+                          </div>
+                        </div>
+                      `;
+                      return;
+                    }
+
+                    homeRecentContainer.innerHTML = `
+                      <div class="quick-list">
+                        ${posts.slice(0, 5).map(post => {
+                          const summary = summarizeContent(post.content, 90);
+                          return `
+                            <article class="quick-post">
+                              <h4>${escapeHtml(post.title || '未命名文章')}</h4>
+                              <div class="meta">
+                                <span>${escapeHtml(post.author || '未知作者')}</span>
+                                <span>${formatDateCN(post.created_at)}</span>
+                                <span>${escapeHtml(post.category || '未分类')}</span>
+                              </div>
+                              <div class="excerpt">${escapeHtml(summary.short)}</div>
+                            </article>
+                          `;
+                        }).join('')}
+                      </div>
+                    `;
+                  }
+
+                  function renderEmptyPosts(title, desc) {
+                    postsContainer.innerHTML = `
+                      <div class="empty-state">
+                        <div>
+                          <strong>${escapeHtml(title)}</strong>
+                          <div>${escapeHtml(desc)}</div>
+                        </div>
+                      </div>
+                    `;
+                  }
+
+                  function renderLoadingPosts(text) {
+                    postsContainer.innerHTML = `
+                      <div class="loading-state">
+                        <div>
+                          <strong>${escapeHtml(text)}</strong>
+                          <div>请稍候，系统正在同步文章列表。</div>
+                        </div>
+                      </div>
+                    `;
+                  }
+
+                  function renderMessage(type, text) {
+                    messageDiv.innerHTML = `<div class="message ${type}">${escapeHtml(text)}</div>`;
+                  }
+
+                  function clearMessage() {
+                    messageDiv.innerHTML = '';
+                  }
+
+                  function updateListMode() {
+                    const parts = [];
+                    if (currentSearchKeyword) parts.push(`搜索：${currentSearchKeyword}`);
+                    if (currentCategoryFilter) parts.push(`分类：${currentCategoryFilter}`);
+                    listModeBadge.textContent = parts.length ? parts.join(' / ') : '全部文章';
+                  }
+
+                  function renderPosts(posts) {
+                    currentList = Array.isArray(posts) ? posts : [];
+                    updateListMode();
+
+                    if (!currentList.length) {
+                      if (currentSearchKeyword || currentCategoryFilter) {
+                        renderEmptyPosts('没有找到匹配文章', '请尝试更换关键词、切换分类，或点击“重置条件”查看全部内容。');
+                      } else {
+                        renderEmptyPosts('当前还没有文章', '请在右侧发布面板中创建第一篇文章。');
+                      }
+                      return;
+                    }
+
+                    postsContainer.innerHTML = currentList.map(post => {
+                      const summary = summarizeContent(post.content, 120);
+                      const safeTitle = escapeHtml(post.title || '未命名文章');
+                      const safeAuthor = escapeHtml(post.author || '未知作者');
+                      const safeCategory = escapeHtml(post.category || '未分类');
+                      const createdAt = formatDateCN(post.created_at);
+                      return `
+                        <article class="post-card" data-id="${escapeHtml(post.id)}">
+                          <div class="post-head">
+                            <div>
+                              <div class="post-title">${safeTitle}</div>
+                            </div>
+                            <div class="category-pill">${safeCategory}</div>
+                          </div>
+
+                          <div class="post-meta">
+                            <span>作者：${safeAuthor}</span>
+                            <span>发布时间：${createdAt}</span>
+                            <span>文章 ID：${escapeHtml(post.id)}</span>
+                          </div>
+
+                          <div class="post-excerpt" id="content-${escapeHtml(post.id)}">${escapeHtml(summary.short)}</div>
+
+                          <div class="post-actions">
+                            <div class="post-actions-left">
+                              <span>${summary.expandable ? '已自动折叠为摘要展示' : '内容较短，已完整展示'}</span>
+                            </div>
+                            <div style="display:flex; gap:10px;">
+                              ${summary.expandable ? `<button class="tiny-btn toggle-content-btn" data-id="${escapeHtml(post.id)}" data-short="${escapeHtml(summary.short)}" data-full="${escapeHtml(summary.full)}" data-expanded="false">查看全文</button>` : ''}
+                              <button class="danger-btn delete-btn" data-id="${escapeHtml(post.id)}" data-title="${safeTitle}">删除文章</button>
+                            </div>
+                          </div>
+                        </article>
+                      `;
+                    }).join('');
+                  }
+
+                  function renderPagination() {
+                    const inSearchMode = !!currentSearchKeyword || !!currentCategoryFilter;
+                    if (inSearchMode) {
+                      pagination.innerHTML = `
+                        <div class="pagination-info">当前处于筛选结果模式，共 ${currentList.length} 篇文章。</div>
+                        <div class="pagination-actions">
+                          <button id="resetFromPagination">返回全部文章</button>
+                        </div>
+                      `;
+                      document.getElementById('resetFromPagination')?.addEventListener('click', resetFilters);
+                      return;
+                    }
+
+                    pagination.innerHTML = `
+                      <div class="pagination-info">第 ${currentPage} / ${totalPages} 页，共 ${totalPosts} 篇文章</div>
+                      <div class="pagination-actions">
+                        <button id="prevPageBtn" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>
+                        <button id="nextPageBtn" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>
+                      </div>
+                    `;
+
+                    document.getElementById('prevPageBtn')?.addEventListener('click', () => {
+                      if (currentPage > 1) loadPosts(currentPage - 1);
+                    });
+
+                    document.getElementById('nextPageBtn')?.addEventListener('click', () => {
+                      if (currentPage < totalPages) loadPosts(currentPage + 1);
+                    });
+                  }
+
+                  function extractTotal(result) {
+                    if (!result || typeof result !== 'object') return null;
+                    const candidates = [result.total, result.totalCount, result.count, result.total_posts];
+                    for (const item of candidates) {
+                      const num = Number(item);
+                      if (Number.isFinite(num) && num >= 0) return num;
+                    }
+                    return null;
+                  }
+
+                  async function loadPosts(page = 1) {
+                    currentPage = page;
+                    renderLoadingPosts('正在加载文章列表');
+
+                    try {
+                      const response = await fetch(`${API_URL}/posts?page=${page}&limit=${PAGE_LIMIT}`);
+                      const result = await response.json();
+
+                      if (!result || !Array.isArray(result.data)) {
+                        throw new Error('Invalid response format');
+                      }
+
+                      currentList = result.data;
+                      totalPages = Math.max(1, Number(result.totalPages) || 1);
+
+                      const extractedTotal = extractTotal(result);
+                      totalPosts = extractedTotal != null ? extractedTotal : ((totalPages - 1) * PAGE_LIMIT + result.data.length);
+
+                      statTotalPosts.textContent = String(totalPosts);
+                      detailPostText.textContent = `当前系统共统计到 ${totalPosts} 篇文章，分页上限为每页 ${PAGE_LIMIT} 篇。`;
+
+                      renderPosts(result.data);
+                      renderPagination();
+                      renderHomeRecent(result.data);
+                    } catch (error) {
+                      postsContainer.innerHTML = `
+                        <div class="empty-state">
+                          <div>
+                            <strong>文章列表加载失败</strong>
+                            <div>无法获取文章数据，请检查博客 API 是否正常工作。</div>
+                          </div>
+                        </div>
+                      `;
+                      homeRecentContainer.innerHTML = `
+                        <div class="empty-state">
+                          <div>
+                            <strong>首页概览加载失败</strong>
+                            <div>无法同步文章摘要数据。</div>
+                          </div>
+                        </div>
+                      `;
+                      pagination.innerHTML = '';
+                    }
+                  }
+
+                  async function searchPosts(keyword) {
+                    renderLoadingPosts('正在搜索文章');
+
+                    try {
+                      const response = await fetch(`${API_URL}/posts/search?q=${encodeURIComponent(keyword)}`);
+                      const posts = await response.json();
+
+                      if (!Array.isArray(posts)) {
+                        throw new Error('Invalid search response');
+                      }
+
+                      let filtered = posts;
+                      if (currentCategoryFilter) {
+                        filtered = posts.filter(post => String(post.category || '') === currentCategoryFilter);
+                      }
+
+                      totalPages = 1;
+                      currentPage = 1;
+                      currentList = filtered;
+                      renderPosts(filtered);
+                      renderPagination();
+                    } catch (error) {
+                      postsContainer.innerHTML = `
+                        <div class="empty-state">
+                          <div>
+                            <strong>搜索失败</strong>
+                            <div>无法完成搜索请求，请稍后重试。</div>
+                          </div>
+                        </div>
+                      `;
+                      pagination.innerHTML = '';
+                    }
+                  }
+
+                  async function loadAllForCategoryFilter() {
+                    renderLoadingPosts('正在按分类筛选');
+
+                    try {
+                      const response = await fetch(`${API_URL}/posts?page=1&limit=1000`);
+                      const result = await response.json();
+
+                      if (!result || !Array.isArray(result.data)) {
+                        throw new Error('Invalid response format');
+                      }
+
+                      const filtered = currentCategoryFilter
+                        ? result.data.filter(post => String(post.category || '') === currentCategoryFilter)
+                        : result.data;
+
+                      currentList = filtered;
+                      totalPages = 1;
+                      currentPage = 1;
+                      renderPosts(filtered);
+                      renderPagination();
+                    } catch (error) {
+                      postsContainer.innerHTML = `
+                        <div class="empty-state">
+                          <div>
+                            <strong>分类筛选失败</strong>
+                            <div>无法按分类加载文章，请稍后重试。</div>
+                          </div>
+                        </div>
+                      `;
+                      pagination.innerHTML = '';
+                    }
+                  }
+
+                  async function runSearchOrFilter() {
+                    if (currentSearchKeyword) {
+                      await searchPosts(currentSearchKeyword);
+                      return;
+                    }
+                    if (currentCategoryFilter) {
+                      await loadAllForCategoryFilter();
+                      return;
+                    }
+                    await loadPosts(1);
+                  }
+
+                  function resetFilters() {
+                    searchInput.value = '';
+                    categoryFilter.value = '';
+                    currentSearchKeyword = '';
+                    currentCategoryFilter = '';
+                    loadPosts(1);
+                  }
+
+                  function openDeleteModal(postId, title) {
+                    deleteTargetId = postId;
+                    confirmText.textContent = `确定要删除《${title}》吗？此操作不可恢复。`;
+                    confirmModal.classList.add('show');
+                  }
+
+                  function closeDeleteModal() {
+                    deleteTargetId = null;
+                    confirmModal.classList.remove('show');
+                  }
+
+                  async function deletePost(postId) {
+                    const response = await fetch(`${API_URL}/posts/${postId}`, {
+                      method: 'DELETE'
+                    });
+                    if (!response.ok) {
+                      throw new Error('Delete failed');
+                    }
+                  }
+
+                  function switchTab(tabName) {
+                    navTabs.forEach(tab => {
+                      tab.classList.toggle('active', tab.dataset.tab === tabName);
+                    });
+
+                    tabPanels.forEach(panel => {
+                      panel.classList.toggle('active', panel.id === `tab-${tabName}`);
+                    });
+                  }
+
+                  navTabs.forEach(tab => {
+                    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+                  });
+
+                  jumpTabButtons.forEach(button => {
+                    button.addEventListener('click', () => switchTab(button.dataset.jumpTab));
+                  });
+
+                  categorySelect.addEventListener('change', function() {
+                    otherCategoryGroup.style.display = this.value === '其他' ? 'block' : 'none';
+                  });
+
+                  postForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const title = document.getElementById('title').value.trim();
+                    const author = document.getElementById('author').value.trim();
+                    let category = categorySelect.value;
+                    const content = document.getElementById('content').value.trim();
+
+                    if (category === '其他') {
+                      category = document.getElementById('otherCategory').value.trim() || '其他';
+                    }
+
+                    try {
+                      const response = await fetch(`${API_URL}/posts`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, author, category, content })
+                      });
+
+                      if (!response.ok) {
+                        throw new Error('Create failed');
+                      }
+
+                      renderMessage('success', '文章发布成功，系统已为你刷新文章列表。');
+                      postForm.reset();
+                      categorySelect.value = '技术';
+                      otherCategoryGroup.style.display = 'none';
+                      setTimeout(clearMessage, 3000);
+
+                      currentSearchKeyword = '';
+                      currentCategoryFilter = '';
+                      searchInput.value = '';
+                      categoryFilter.value = '';
+                      await loadPosts(1);
+                      await loadHealthStatus();
+                    } catch (error) {
+                      renderMessage('error', '文章发布失败，请检查后端接口或稍后重试。');
+                    }
+                  });
+
+                  document.getElementById('searchBtn').addEventListener('click', () => {
+                    currentSearchKeyword = searchInput.value.trim();
+                    currentCategoryFilter = categoryFilter.value;
+                    runSearchOrFilter();
+                  });
+
+                  document.getElementById('resetBtn').addEventListener('click', resetFilters);
+
+                  searchInput.addEventListener('keypress', e => {
+                    if (e.key === 'Enter') {
+                      currentSearchKeyword = searchInput.value.trim();
+                      currentCategoryFilter = categoryFilter.value;
+                      runSearchOrFilter();
+                    }
+                  });
+
+                  categoryFilter.addEventListener('change', () => {
+                    currentCategoryFilter = categoryFilter.value;
+                    currentSearchKeyword = searchInput.value.trim();
+                    runSearchOrFilter();
+                  });
+
+                  postsContainer.addEventListener('click', async e => {
+                    const toggleBtn = e.target.closest('.toggle-content-btn');
+                    const deleteBtn = e.target.closest('.delete-btn');
+
+                    if (toggleBtn) {
+                      const postId = toggleBtn.dataset.id;
+                      const contentEl = document.getElementById(`content-${postId}`);
+                      const expanded = toggleBtn.dataset.expanded === 'true';
+
+                      if (!contentEl) return;
+
+                      if (expanded) {
+                        contentEl.textContent = toggleBtn.dataset.short;
+                        toggleBtn.dataset.expanded = 'false';
+                        toggleBtn.textContent = '查看全文';
+                      } else {
+                        contentEl.textContent = toggleBtn.dataset.full;
+                        toggleBtn.dataset.expanded = 'true';
+                        toggleBtn.textContent = '收起内容';
+                      }
+                      return;
+                    }
+
+                    if (deleteBtn) {
+                      openDeleteModal(deleteBtn.dataset.id, deleteBtn.dataset.title || '该文章');
+                    }
+                  });
+
+                  confirmDeleteBtn.addEventListener('click', async () => {
+                    if (!deleteTargetId) return;
+                    try {
+                      await deletePost(deleteTargetId);
+                      closeDeleteModal();
+                      if (currentSearchKeyword || currentCategoryFilter) {
+                        await runSearchOrFilter();
+                      } else {
+                        await loadPosts(currentPage);
+                      }
+                      await loadHealthStatus();
+                    } catch (error) {
+                      closeDeleteModal();
+                      alert('删除失败，请检查后端接口或稍后重试。');
+                    }
+                  });
+
+                  cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+                  confirmModal.addEventListener('click', e => {
+                    if (e.target === confirmModal) closeDeleteModal();
+                  });
+
+                  document.getElementById('refreshStatusBtn').addEventListener('click', async () => {
+                    await loadHealthStatus();
+                    await loadPosts(currentSearchKeyword || currentCategoryFilter ? 1 : currentPage);
+                  });
+
+                  async function initialize() {
+                    formatClock();
+                    setInterval(formatClock, 1000 * 30);
+                    await Promise.all([loadPosts(1), loadHealthStatus()]);
+                  }
+
+                  initialize();
+                </script>
+              </body>
+              </html>
+              EOF
+
+              cat > /etc/nginx/conf.d/default.conf << 'EOF'
+              server {
+                listen 80;
+                server_name _;
+
+                location / {
+                  root /usr/share/nginx/html;
+                  index index.html;
+                  try_files $uri $uri/ /index.html;
+                }
+
+                location /api/ {
+                  proxy_pass http://blog-api:3000/;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection 'upgrade';
+                  proxy_set_header Host $host;
+                  proxy_cache_bypass $http_upgrade;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                }
+              }
+              EOF
+
+              nginx -g 'daemon off;'
+          ports:
+            - containerPort: 80
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-frontend
+  namespace: blog-platform
+  labels:
+    app: blog
+    tier: frontend
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080
+  selector:
+    app: blog
+    tier: frontend
