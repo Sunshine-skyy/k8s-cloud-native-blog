@@ -197,7 +197,8 @@ Kubernetes 资源关系如下：
 
 ## Blog Post
 
-详细实现过程与问题排查文章整理中，后续补充。
+详细实现过程、架构说明与问题排查见：
+- [基于 Kubernetes 的云原生博客系统设计与实现：从博客功能实现到云原生部署实践](https://sunshine-skyy.github.io/posts/kubernetes-cloud-native-blog-system-design-and-implementation/)
 
 ## 开源说明
 
